@@ -41,7 +41,7 @@ export type Action =
       type: "spin";
       areaId: string;
       cashIn:
-        | { color: ClipColor; count: 2 | 3 }
+        | { color: ClipColor; count: 1 | 2 | 3 }
         | { gold: true }
         | null;
       rolledSegment: SpinPayload["rolledSegment"];
