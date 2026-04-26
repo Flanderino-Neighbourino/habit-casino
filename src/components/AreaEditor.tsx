@@ -7,6 +7,12 @@ import type {
   Reward,
   RewardTier,
 } from "../types";
+import {
+  HABIT_DAILY_MAX,
+  HABIT_DAILY_MIN,
+  HABIT_YIELD_MAX,
+  HABIT_YIELD_MIN,
+} from "../types";
 import { useApp } from "../state/AppContext";
 import { uid } from "../lib/util";
 
@@ -30,9 +36,11 @@ const TIERS: { tier: RewardTier; label: string }[] = [
 export function AreaEditor({
   area,
   showAreaName = true,
+  showHabitHelp = false,
 }: {
   area: Area;
   showAreaName?: boolean;
+  showHabitHelp?: boolean;
 }) {
   const { dispatch } = useApp();
 
@@ -55,14 +63,19 @@ export function AreaEditor({
         </div>
       )}
 
-      <HabitsEditor area={area} />
+      <HabitsEditor area={area} showHelp={showHabitHelp} />
       <RewardsEditor area={area} />
       <MilestonesEditor area={area} />
     </div>
   );
 }
 
-function HabitsEditor({ area }: { area: Area }) {
+function clamp(n: number, lo: number, hi: number): number {
+  if (Number.isNaN(n)) return lo;
+  return Math.max(lo, Math.min(hi, Math.floor(n)));
+}
+
+function HabitsEditor({ area, showHelp }: { area: Area; showHelp: boolean }) {
   const { dispatch } = useApp();
 
   const update = (habits: Habit[]) =>
@@ -75,7 +88,14 @@ function HabitsEditor({ area }: { area: Area }) {
     if (area.habits.length >= 10) return;
     update([
       ...area.habits,
-      { id: uid(), name: "", effortNumber: 1, effortUnit: "" },
+      {
+        id: uid(),
+        name: "",
+        effortNumber: 1,
+        effortUnit: "",
+        clipYield: 1,
+        dailyTarget: 1,
+      },
     ]);
   };
 
@@ -92,40 +112,91 @@ function HabitsEditor({ area }: { area: Area }) {
           {area.habits.length}/10
         </span>
       </div>
-      <div className="space-y-2">
+      {showHelp && (
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-2 leading-relaxed">
+          Set clip yield higher for harder habits. Set daily target if you want to be
+          able to do this habit multiple times a day.
+        </p>
+      )}
+      <div className="space-y-3">
         {area.habits.map((h, i) => (
-          <div key={h.id} className="flex flex-wrap items-center gap-2">
-            <input
-              className="input flex-1 min-w-[140px]"
-              placeholder="Habit name (e.g. Burpees)"
-              value={h.name}
-              onChange={(e) => setHabit(i, { name: e.target.value })}
-            />
-            <input
-              type="number"
-              min={1}
-              className="input w-20"
-              value={h.effortNumber}
-              onChange={(e) =>
-                setHabit(i, {
-                  effortNumber: Math.max(1, Number(e.target.value) || 1),
-                })
-              }
-            />
-            <input
-              className="input w-32"
-              placeholder="unit"
-              value={h.effortUnit}
-              onChange={(e) => setHabit(i, { effortUnit: e.target.value })}
-            />
-            <button
-              className="btn-ghost p-2"
-              onClick={() => removeHabit(i)}
-              disabled={area.habits.length <= 1}
-              aria-label="Remove habit"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+          <div
+            key={h.id}
+            className="card p-3 space-y-2"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                className="input flex-1 min-w-[140px]"
+                placeholder="Habit name (e.g. Burpees)"
+                value={h.name}
+                onChange={(e) => setHabit(i, { name: e.target.value })}
+              />
+              <input
+                type="number"
+                min={1}
+                className="input w-20"
+                value={h.effortNumber}
+                onChange={(e) =>
+                  setHabit(i, {
+                    effortNumber: Math.max(1, Number(e.target.value) || 1),
+                  })
+                }
+              />
+              <input
+                className="input w-32"
+                placeholder="unit"
+                value={h.effortUnit}
+                onChange={(e) => setHabit(i, { effortUnit: e.target.value })}
+              />
+              <button
+                className="btn-ghost p-2"
+                onClick={() => removeHabit(i)}
+                disabled={area.habits.length <= 1}
+                aria-label="Remove habit"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <label className="flex items-center gap-1.5">
+                <span className="text-slate-500">📎 per completion</span>
+                <input
+                  type="number"
+                  min={HABIT_YIELD_MIN}
+                  max={HABIT_YIELD_MAX}
+                  className="input w-16"
+                  value={h.clipYield}
+                  onChange={(e) =>
+                    setHabit(i, {
+                      clipYield: clamp(
+                        Number(e.target.value) || HABIT_YIELD_MIN,
+                        HABIT_YIELD_MIN,
+                        HABIT_YIELD_MAX
+                      ),
+                    })
+                  }
+                />
+              </label>
+              <label className="flex items-center gap-1.5">
+                <span className="text-slate-500">Times/day</span>
+                <input
+                  type="number"
+                  min={HABIT_DAILY_MIN}
+                  max={HABIT_DAILY_MAX}
+                  className="input w-16"
+                  value={h.dailyTarget}
+                  onChange={(e) =>
+                    setHabit(i, {
+                      dailyTarget: clamp(
+                        Number(e.target.value) || HABIT_DAILY_MIN,
+                        HABIT_DAILY_MIN,
+                        HABIT_DAILY_MAX
+                      ),
+                    })
+                  }
+                />
+              </label>
+            </div>
           </div>
         ))}
       </div>

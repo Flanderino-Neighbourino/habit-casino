@@ -162,22 +162,38 @@ export function reducer(state: AppState, action: Action): AppState {
     case "checkHabit": {
       const area = state.areas.find((a) => a.id === action.areaId);
       if (!area) return state;
-      if (area.dailyState.completedHabitIds.includes(action.habitId)) {
-        return state;
+      const habit = area.habits.find((h) => h.id === action.habitId);
+      if (!habit) return state;
+      const currentCount = area.dailyState.completionCounts[habit.id] ?? 0;
+      if (currentCount >= habit.dailyTarget) return state;
+
+      const clips: Clip[] = [];
+      for (let i = 0; i < habit.clipYield; i++) {
+        clips.push(makeClip(habit.id));
       }
-      const clip = makeClip(action.habitId);
+      const goldCount = clips.filter((c) => c.color === "gold").length;
+      const newCount = currentCount + 1;
+
       let next = updateArea(state, action.areaId, (a) => ({
         ...a,
-        bank: [...a.bank, clip],
+        bank: [...a.bank, ...clips],
         dailyState: {
           ...a.dailyState,
-          completedHabitIds: [...a.dailyState.completedHabitIds, action.habitId],
+          completionCounts: {
+            ...a.dailyState.completionCounts,
+            [habit.id]: newCount,
+          },
         },
       }));
       next = pushHistory(next, {
         areaId: action.areaId,
         type: "habit_completed",
-        payload: { habitId: action.habitId, clipColor: clip.color },
+        payload: {
+          habitId: habit.id,
+          completionNumber: newCount,
+          clipsEarned: clips.length,
+          goldCount,
+        },
       });
       return next;
     }
@@ -461,7 +477,7 @@ export function reducer(state: AppState, action: Action): AppState {
           changed = true;
           return {
             ...a,
-            dailyState: { date: today, completedHabitIds: [] },
+            dailyState: { date: today, completionCounts: {} },
           };
         }
         return a;

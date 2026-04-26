@@ -129,7 +129,11 @@ export function Onboarding() {
             <h1 className="text-2xl font-bold">
               Configure {state.areas[step.areaIdx].name || `Area ${step.areaIdx + 1}`}
             </h1>
-            <AreaEditor area={state.areas[step.areaIdx]} showAreaName={false} />
+            <AreaEditor
+              area={state.areas[step.areaIdx]}
+              showAreaName={false}
+              showHabitHelp
+            />
             <NextButton area={state.areas[step.areaIdx]} onNext={goNext} />
           </div>
         )}
@@ -159,7 +163,16 @@ function NextButton({
   onNext: () => void;
 }) {
   const habitsValid = area.habits.every(
-    (h) => h.name.trim() && h.effortNumber >= 1 && h.effortUnit.trim()
+    (h) =>
+      h.name.trim() &&
+      h.effortNumber >= 1 &&
+      h.effortUnit.trim() &&
+      Number.isInteger(h.clipYield) &&
+      h.clipYield >= 1 &&
+      h.clipYield <= 20 &&
+      Number.isInteger(h.dailyTarget) &&
+      h.dailyTarget >= 1 &&
+      h.dailyTarget <= 99
   );
   const rewardsValid = (["t1", "t2", "t3", "jackpot"] as const).every(
     (t) => area.rewards[t].name.trim() && area.rewards[t].amountNumber > 0

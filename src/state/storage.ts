@@ -1,4 +1,4 @@
-import type { AppState } from "../types";
+import type { AppState, Area, Habit } from "../types";
 import { SCHEMA_VERSION } from "../types";
 import { makeInitialState } from "./initial";
 
@@ -44,6 +44,55 @@ export function clearStorage(): void {
   }
 }
 
-function migrate(_state: AppState): AppState | null {
+type V1Habit = {
+  id: string;
+  name: string;
+  effortNumber: number;
+  effortUnit: string;
+};
+
+type V1Area = Omit<Area, "habits" | "dailyState"> & {
+  habits: V1Habit[];
+  dailyState: { date: string; completedHabitIds: string[] };
+};
+
+type V1State = Omit<AppState, "areas" | "schemaVersion"> & {
+  areas: V1Area[];
+  schemaVersion: 1;
+};
+
+function migrate(state: AppState): AppState | null {
+  const v = (state as { schemaVersion?: number }).schemaVersion ?? 0;
+  let current: unknown = state;
+  if (v === 1) {
+    current = migrateV1toV2(current as V1State);
+  }
+  if ((current as AppState).schemaVersion === SCHEMA_VERSION) {
+    return current as AppState;
+  }
   return null;
+}
+
+function migrateV1toV2(s: V1State): AppState {
+  const areas: Area[] = s.areas.map((a) => {
+    const habits: Habit[] = a.habits.map((h) => ({
+      ...h,
+      clipYield: 1,
+      dailyTarget: 1,
+    }));
+    const completionCounts: Record<string, number> = {};
+    for (const id of a.dailyState.completedHabitIds) {
+      completionCounts[id] = 1;
+    }
+    return {
+      ...a,
+      habits,
+      dailyState: { date: a.dailyState.date, completionCounts },
+    };
+  });
+  return {
+    ...s,
+    areas,
+    schemaVersion: 2,
+  };
 }

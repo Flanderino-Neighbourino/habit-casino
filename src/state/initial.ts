@@ -9,7 +9,14 @@ function blankArea(name: string): Area {
     id: uid(),
     name,
     habits: [
-      { id: uid(), name: "", effortNumber: 1, effortUnit: "" },
+      {
+        id: uid(),
+        name: "",
+        effortNumber: 1,
+        effortUnit: "",
+        clipYield: 1,
+        dailyTarget: 1,
+      },
     ],
     rewards: {
       t1: { name: "", amountNumber: 1, amountUnit: "minutes" },
@@ -26,7 +33,7 @@ function blankArea(name: string): Area {
     jar: [],
     dailyState: {
       date: todayLocalDate(),
-      completedHabitIds: [],
+      completionCounts: {},
     },
   };
 }
