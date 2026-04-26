@@ -172,15 +172,16 @@ export function SpinView({ area }: { area: Area }) {
     }
   };
 
-  const disabled = spinning || hasActiveDiscount || hasPendingBonus;
+  const bankEmpty = area.bank.length === 0;
+  const disabled = spinning || hasActiveDiscount || hasPendingBonus || bankEmpty;
 
   return (
     <div className="space-y-4" ref={containerRef}>
       <section className="card p-4">
         <h2 className="font-semibold mb-2">Cash in</h2>
-        {area.bank.length === 0 ? (
+        {bankEmpty ? (
           <p className="text-sm text-slate-500">
-            Empty bank. You can still spin for a T1-only chance.
+            Bank is empty. Complete a habit to earn a clip before spinning.
           </p>
         ) : (
           <div className="space-y-2">
@@ -264,6 +265,11 @@ export function SpinView({ area }: { area: Area }) {
         {hasPendingBonus && (
           <p className="text-xs text-slate-500 mt-2">
             Resolve the pending bonus wheel before spinning again.
+          </p>
+        )}
+        {bankEmpty && !hasActiveDiscount && !hasPendingBonus && (
+          <p className="text-xs text-slate-500 mt-2">
+            Earn at least one clip from a habit to spin.
           </p>
         )}
       </div>
