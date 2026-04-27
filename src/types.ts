@@ -121,6 +121,8 @@ export type AppState = {
 };
 
 export const SCHEMA_VERSION = 2;
+export const MIN_AREAS = 1;
+export const MAX_AREAS = 5;
 export const HABIT_YIELD_MIN = 1;
 export const HABIT_YIELD_MAX = 20;
 export const HABIT_DAILY_MIN = 1;

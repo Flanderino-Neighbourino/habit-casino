@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { ChevronLeft, Cloud } from "lucide-react";
+import { ChevronLeft, Cloud, HelpCircle, Plus, Trash2 } from "lucide-react";
 import { useApp } from "../state/AppContext";
 import { AreaEditor } from "./AreaEditor";
+import { HelpModal } from "./HelpModal";
 import {
   isSyncConfigured,
   pullFromCloud,
   savePassphrase,
 } from "../lib/sync";
+import { MAX_AREAS, MIN_AREAS } from "../types";
 
 type Step =
   | { kind: "welcome" }
@@ -17,7 +19,7 @@ type Step =
 export function Onboarding() {
   const { state, dispatch } = useApp();
   const [step, setStep] = useState<Step>({ kind: "welcome" });
-  const [names, setNames] = useState<string[]>(state.areas.map((a) => a.name));
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const totalSteps = 2 + state.areas.length + 1;
   const stepIndex = (() => {
@@ -30,9 +32,6 @@ export function Onboarding() {
   const goNext = () => {
     if (step.kind === "welcome") setStep({ kind: "names" });
     else if (step.kind === "names") {
-      names.forEach((n, i) =>
-        dispatch({ type: "renameArea", areaId: state.areas[i].id, name: n })
-      );
       setStep({ kind: "area", areaIdx: 0 });
     } else if (step.kind === "area") {
       const next = step.areaIdx + 1;
@@ -76,7 +75,16 @@ export function Onboarding() {
             />
           </div>
         </div>
+        <button
+          className="btn-ghost p-2"
+          onClick={() => setHelpOpen(true)}
+          aria-label="Help"
+        >
+          <HelpCircle className="w-5 h-5" />
+        </button>
       </header>
+
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 pb-32">
         {step.kind === "welcome" && (
@@ -101,33 +109,69 @@ export function Onboarding() {
 
         {step.kind === "names" && (
           <div className="space-y-4">
-            <h1 className="text-2xl font-bold">Name your three areas.</h1>
+            <h1 className="text-2xl font-bold">Set up your areas.</h1>
             <p className="text-slate-600 dark:text-slate-400">
-              Defaults are filled in. Edit if you want.
+              Pick between {MIN_AREAS} and {MAX_AREAS} areas. Defaults are filled
+              in — rename or add/remove as you like.
             </p>
-            <div className="space-y-3">
-              {names.map((n, i) => (
-                <div key={i}>
-                  <label className="label">Area {i + 1}</label>
+            <div className="space-y-2">
+              {state.areas.map((a, i) => (
+                <div key={a.id} className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500 w-16 shrink-0">
+                    Area {i + 1}
+                  </span>
                   <input
-                    className="input"
-                    value={n}
-                    onChange={(e) => {
-                      const copy = [...names];
-                      copy[i] = e.target.value;
-                      setNames(copy);
-                    }}
+                    className="input flex-1"
+                    value={a.name}
+                    onChange={(e) =>
+                      dispatch({
+                        type: "renameArea",
+                        areaId: a.id,
+                        name: e.target.value,
+                      })
+                    }
                   />
+                  <button
+                    className="btn-ghost p-2"
+                    onClick={() => {
+                      if (state.areas.length <= MIN_AREAS) return;
+                      if (
+                        window.confirm(
+                          `Remove "${a.name || `Area ${i + 1}`}"? You can re-add later but you'll have to set up its habits and rewards from scratch.`
+                        )
+                      ) {
+                        dispatch({ type: "removeArea", areaId: a.id });
+                      }
+                    }}
+                    disabled={state.areas.length <= MIN_AREAS}
+                    aria-label="Remove area"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
             <button
-              className="btn-primary w-full sm:w-auto"
-              onClick={goNext}
-              disabled={names.some((n) => !n.trim())}
+              className="btn-secondary"
+              onClick={() =>
+                dispatch({
+                  type: "addArea",
+                  name: `Area ${state.areas.length + 1}`,
+                })
+              }
+              disabled={state.areas.length >= MAX_AREAS}
             >
-              Next
+              <Plus className="w-4 h-4" /> Add area
             </button>
+            <div className="pt-2">
+              <button
+                className="btn-primary w-full sm:w-auto"
+                onClick={goNext}
+                disabled={state.areas.some((a) => !a.name.trim())}
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
 

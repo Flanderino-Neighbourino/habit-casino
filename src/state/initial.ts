@@ -4,7 +4,7 @@ import { todayLocalDate, uid } from "../lib/util";
 
 const DEFAULT_AREA_NAMES = ["Fitness", "Career", "Music"] as const;
 
-function blankArea(name: string): Area {
+export function blankArea(name: string): Area {
   return {
     id: uid(),
     name,

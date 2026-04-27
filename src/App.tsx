@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings } from "lucide-react";
+import { HelpCircle, Settings } from "lucide-react";
 import { useApp } from "./state/AppContext";
 import { Onboarding } from "./components/Onboarding";
 import { SettingsModal } from "./components/SettingsModal";
@@ -8,6 +8,7 @@ import { HistoryTab } from "./components/HistoryTab";
 import { areaAccentClasses } from "./lib/util";
 import { DiscountBanners } from "./components/DiscountBanners";
 import { BonusOverlay } from "./components/BonusOverlay";
+import { HelpModal } from "./components/HelpModal";
 
 type TabId = string; // areaId or "history"
 
@@ -15,6 +16,7 @@ export default function App() {
   const { state } = useApp();
   const [tab, setTab] = useState<TabId>(state.areas[0]?.id ?? "history");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   if (!state.onboardingComplete) {
     return <Onboarding />;
@@ -48,8 +50,15 @@ export default function App() {
             );
           })}
           <button
+            className="ml-auto p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            onClick={() => setHelpOpen(true)}
+            aria-label="Help"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </button>
+          <button
             className={[
-              "ml-auto px-3 py-1.5 rounded-lg text-sm font-medium transition whitespace-nowrap",
+              "px-3 py-1.5 rounded-lg text-sm font-medium transition whitespace-nowrap",
               tab === "history"
                 ? "bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800",
@@ -83,6 +92,7 @@ export default function App() {
       {settingsOpen && (
         <SettingsModal onClose={() => setSettingsOpen(false)} />
       )}
+      <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }

@@ -76,7 +76,7 @@ export function clipColorHex(c: ClipColor): string {
   }
 }
 
-export const AREA_ACCENTS = ["green", "blue", "purple"] as const;
+export const AREA_ACCENTS = ["green", "blue", "purple", "orange", "pink"] as const;
 export type AreaAccent = (typeof AREA_ACCENTS)[number];
 
 export function areaAccentClasses(idx: number): {
@@ -111,6 +111,22 @@ export function areaAccentClasses(idx: number): {
         ring: "ring-purple-500",
         border: "border-purple-500",
         dot: "bg-purple-500",
+      };
+    case "orange":
+      return {
+        bg: "bg-orange-500",
+        text: "text-orange-500",
+        ring: "ring-orange-500",
+        border: "border-orange-500",
+        dot: "bg-orange-500",
+      };
+    case "pink":
+      return {
+        bg: "bg-pink-500",
+        text: "text-pink-500",
+        ring: "ring-pink-500",
+        border: "border-pink-500",
+        dot: "bg-pink-500",
       };
   }
 }

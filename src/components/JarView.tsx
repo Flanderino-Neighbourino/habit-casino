@@ -20,7 +20,8 @@ function Jar({ area, areaIndex }: { area: Area; areaIndex: number }) {
   const max = Math.max(area.milestones[2].target, total);
   const renderClips = Math.min(total, 200);
 
-  const accentByIdx = ["#22c55e", "#3b82f6", "#a855f7"][areaIndex] ?? "#22c55e";
+  const accentByIdx =
+    ["#22c55e", "#3b82f6", "#a855f7", "#f97316", "#ec4899"][areaIndex] ?? "#22c55e";
 
   return (
     <section className="card p-4">

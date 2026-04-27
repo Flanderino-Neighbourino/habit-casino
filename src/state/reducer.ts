@@ -12,7 +12,7 @@ import type {
   RewardTier,
   SpinPayload,
 } from "../types";
-import { MAX_HISTORY } from "../types";
+import { MAX_AREAS, MAX_HISTORY, MIN_AREAS } from "../types";
 import {
   nowIso,
   pickRandomIndices,
@@ -20,9 +20,12 @@ import {
   todayLocalDate,
   uid,
 } from "../lib/util";
+import { blankArea } from "./initial";
 
 export type Action =
   | { type: "completeOnboarding" }
+  | { type: "addArea"; name: string }
+  | { type: "removeArea"; areaId: string }
   | { type: "renameArea"; areaId: string; name: string }
   | { type: "setHabits"; areaId: string; habits: Habit[] }
   | {
@@ -134,6 +137,20 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "completeOnboarding":
       return { ...state, onboardingComplete: true };
+
+    case "addArea": {
+      if (state.areas.length >= MAX_AREAS) return state;
+      return { ...state, areas: [...state.areas, blankArea(action.name)] };
+    }
+
+    case "removeArea": {
+      if (state.areas.length <= MIN_AREAS) return state;
+      const areas = state.areas.filter((a) => a.id !== action.areaId);
+      const pendingBonusQueue = state.pendingBonusQueue.filter(
+        (s) => s.areaId !== action.areaId
+      );
+      return { ...state, areas, pendingBonusQueue };
+    }
 
     case "renameArea":
       return updateArea(state, action.areaId, (a) => ({
