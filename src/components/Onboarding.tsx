@@ -89,15 +89,27 @@ export function Onboarding() {
       <main className="flex-1 max-w-2xl w-full mx-auto px-4 py-6 pb-32">
         {step.kind === "welcome" && (
           <div className="space-y-4">
-            <h1 className="text-3xl font-bold">Welcome to Habit Casino.</h1>
+            <h1 className="text-3xl font-bold">Welcome to the Habit Tracker Casino!</h1>
             <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
-              You're going to set up between 1 and 5 life areas. In each area
-              you'll define habits that earn you paper clips, four real-world
-              rewards (T1 → Jackpot) you can spin for, and three jar
-              milestones. Once you're done, completing a habit earns a clip,
-              cashing in clips activates better tiers on the wheel, and the
-              wheel decides what you've actually earned. The rules are
-              ruthless on purpose — that's why it works.
+              Ready to make adapting new habits as easy as sitting at a slot
+              machine?
+            </p>
+            <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300">
+              You probably have things you want to do more of, like workouts,
+              reading, practicing something, and things you already love but
+              want to limit, like Netflix, takeout, or gaming. Habit Casino
+              glues them together. The good things become the only way to earn
+              the fun things. Doing your habit drops a paper clip in your bank;
+              cashing in clips lets you spin the wheel for real-world rewards
+              you've picked. The wheel decides whether you actually win
+              (variable rewards, near-jackpots, the works) and the rules are
+              tight on purpose. That's the trick: the dopamine that normally
+              pulls you toward the couch starts pulling you toward the gym.
+            </p>
+            <p className="text-base leading-relaxed text-slate-700 dark:text-slate-300">
+              Setup takes about a few minutes. Pick 1–5 areas of your life, a
+              few habits in each, and the rewards you'll be spinning for. The
+              rest is up to you and the wheel. Enjoy!
             </p>
             <div className="flex flex-wrap gap-2">
               <button className="btn-primary text-lg" onClick={goNext}>
