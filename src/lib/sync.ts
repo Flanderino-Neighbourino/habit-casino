@@ -7,6 +7,7 @@ import type { AppState } from "../types";
 
 const SYNC_PASSPHRASE_KEY = "habitCasino.syncPassphrase";
 const SYNC_LAST_AT_KEY = "habitCasino.syncLastAt";
+const LOCAL_CHANGED_AT_KEY = "habitCasino.localChangedAt";
 
 // Set by the build pipeline / hardcoded after Cloudflare deploy.
 // Empty string disables sync UI.
@@ -37,6 +38,7 @@ export function clearPassphrase(): void {
   try {
     localStorage.removeItem(SYNC_PASSPHRASE_KEY);
     localStorage.removeItem(SYNC_LAST_AT_KEY);
+    localStorage.removeItem(LOCAL_CHANGED_AT_KEY);
   } catch {
     /* ignore */
   }
@@ -53,6 +55,22 @@ export function getLastSyncedAt(): string | null {
 function setLastSyncedAt(iso: string): void {
   try {
     localStorage.setItem(SYNC_LAST_AT_KEY, iso);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function getLocalChangedAt(): string | null {
+  try {
+    return localStorage.getItem(LOCAL_CHANGED_AT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setLocalChangedAt(iso: string): void {
+  try {
+    localStorage.setItem(LOCAL_CHANGED_AT_KEY, iso);
   } catch {
     /* ignore */
   }
@@ -84,6 +102,7 @@ export async function pushToCloud(
   }
   const json = (await res.json()) as { updatedAt: string };
   setLastSyncedAt(json.updatedAt);
+  setLocalChangedAt(json.updatedAt);
   return json;
 }
 
@@ -104,5 +123,19 @@ export async function pullFromCloud(
     throw new Error("Cloud data is corrupted (couldn't parse JSON).");
   }
   setLastSyncedAt(record.updatedAt);
+  setLocalChangedAt(record.updatedAt);
   return { state: parsed, updatedAt: record.updatedAt };
+}
+
+export type CloudHead = { updatedAt: string } | null;
+
+export async function getCloudUpdatedAt(passphrase: string): Promise<CloudHead> {
+  const key = await passphraseToKey(passphrase);
+  const res = await fetch(`${SYNC_BASE_URL}/sync/${key}`);
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    throw new Error(`Sync check failed: ${res.status}`);
+  }
+  const record = (await res.json()) as RemoteRecord;
+  return { updatedAt: record.updatedAt };
 }
