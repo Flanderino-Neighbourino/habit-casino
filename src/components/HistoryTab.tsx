@@ -108,17 +108,38 @@ function FilterPill({
 
 function entrySummary(
   e: HistoryEntry,
-  habits: { id: string; name: string }[]
+  habits: { id: string; name: string; dailyTarget?: number }[]
 ): string {
   const habitName = (id: string | undefined) => {
     if (!id) return "";
     if (id === "deleted") return "deleted habit";
     return habits.find((h) => h.id === id)?.name ?? "deleted habit";
   };
+  const habitTarget = (id: string | undefined) =>
+    habits.find((h) => h.id === id)?.dailyTarget;
 
   switch (e.type) {
-    case "habit_completed":
-      return `✅ Completed: ${habitName((e.payload as { habitId?: string }).habitId)}`;
+    case "habit_completed": {
+      const p = e.payload as {
+        habitId?: string;
+        completionNumber?: number;
+        clipsEarned?: number;
+        goldCount?: number;
+      };
+      const name = habitName(p.habitId);
+      // Old-format entries (no completionNumber/clipsEarned) → simple summary
+      if (p.completionNumber === undefined || p.clipsEarned === undefined) {
+        return `✅ Completed ${name}`;
+      }
+      const target = habitTarget(p.habitId);
+      const setLabel = target
+        ? `(set ${p.completionNumber} of ${target}) `
+        : `(set ${p.completionNumber}) `;
+      const sparkle = (p.goldCount ?? 0) > 0 ? " ✨" : "";
+      return `✅ Completed ${name} ${setLabel}→ ${p.clipsEarned} clip${
+        p.clipsEarned === 1 ? "" : "s"
+      }${sparkle}`;
+    }
     case "spin": {
       const p = e.payload as {
         rolledSegment: string;

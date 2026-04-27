@@ -7,13 +7,12 @@ import { ClipDot } from "./ClipDot";
 import { RewardModal } from "./RewardModal";
 
 type CashIn =
-  | { kind: "none" }
-  | { kind: "color"; color: ClipColor; count: 2 | 3 }
+  | { kind: "color"; color: ClipColor; count: 1 | 2 | 3 }
   | { kind: "gold" };
 
 export function SpinView({ area }: { area: Area }) {
   const { state, dispatch } = useApp();
-  const [cashIn, setCashIn] = useState<CashIn>({ kind: "none" });
+  const [cashIn, setCashIn] = useState<CashIn | null>(null);
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [reward, setReward] = useState<SpinPayload | null>(null);
@@ -52,10 +51,35 @@ export function SpinView({ area }: { area: Area }) {
     return c;
   }, [area.bank]);
 
+  const isAffordable = (ci: CashIn | null): boolean => {
+    if (!ci) return false;
+    if (ci.kind === "color") return colorCounts[ci.color] >= ci.count;
+    return colorCounts.gold > 0;
+  };
+
+  const pickDefaultCashIn = (): CashIn | null => {
+    const nonGold = NON_GOLD_COLORS
+      .map((c) => [c, colorCounts[c]] as const)
+      .filter(([, n]) => n > 0)
+      .sort((a, b) => b[1] - a[1]);
+    if (nonGold.length > 0) {
+      return { kind: "color", color: nonGold[0][0], count: 1 };
+    }
+    if (colorCounts.gold > 0) return { kind: "gold" };
+    return null;
+  };
+
+  useEffect(() => {
+    if (!isAffordable(cashIn)) {
+      setCashIn(pickDefaultCashIn());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [area.bank.length]);
+
   const activeTiers: ("t1" | "t2" | "t3")[] = ["t1"];
-  if (cashIn.kind === "color" && cashIn.count >= 2) activeTiers.push("t2");
-  if (cashIn.kind === "color" && cashIn.count >= 3) activeTiers.push("t3");
-  if (cashIn.kind === "gold") activeTiers.push("t2", "t3");
+  if (cashIn?.kind === "color" && cashIn.count >= 2) activeTiers.push("t2");
+  if (cashIn?.kind === "color" && cashIn.count >= 3) activeTiers.push("t3");
+  if (cashIn?.kind === "gold") activeTiers.push("t2", "t3");
 
   const hasActiveDiscount = state.pendingBonusQueue.some(
     (s) => s.areaId === area.id && s.state === "active_discount"
@@ -66,8 +90,7 @@ export function SpinView({ area }: { area: Area }) {
 
   const onSpin = () => {
     if (spinning) return;
-    if (cashIn.kind === "color" && colorCounts[cashIn.color] < cashIn.count) return;
-    if (cashIn.kind === "gold" && colorCounts.gold < 1) return;
+    if (!isAffordable(cashIn)) return;
 
     const segment: WheelSegment = rollSegment();
     const target = targetRotationForSegment(segment);
@@ -98,12 +121,12 @@ export function SpinView({ area }: { area: Area }) {
   const finishSpin = (rolledSegment: WheelSegment) => {
     setSpinning(false);
 
+    if (!cashIn) return;
+
     const dispatchCashIn =
       cashIn.kind === "color"
         ? { color: cashIn.color, count: cashIn.count }
-        : cashIn.kind === "gold"
-        ? { gold: true as const }
-        : null;
+        : { gold: true as const };
 
     dispatch({
       type: "spin",
@@ -156,7 +179,7 @@ export function SpinView({ area }: { area: Area }) {
       nearMiss,
     };
     setReward(payload);
-    setCashIn({ kind: "none" });
+    setCashIn(null);
   };
 
   const closeReward = () => {
@@ -172,44 +195,58 @@ export function SpinView({ area }: { area: Area }) {
     }
   };
 
-  const disabled = spinning || hasActiveDiscount || hasPendingBonus;
+  const bankEmpty = area.bank.length === 0;
+  const disabled = spinning || hasActiveDiscount || hasPendingBonus || bankEmpty;
 
   return (
     <div className="space-y-4" ref={containerRef}>
       <section className="card p-4">
         <h2 className="font-semibold mb-2">Cash in</h2>
-        {area.bank.length === 0 ? (
+        {bankEmpty ? (
           <p className="text-sm text-slate-500">
-            Empty bank. You can still spin for a T1-only chance.
+            Bank is empty. Complete a habit to earn a clip before spinning.
           </p>
         ) : (
           <div className="space-y-2">
-            <RadioRow
-              label="No cash-in (T1 only)"
-              checked={cashIn.kind === "none"}
-              onSelect={() => setCashIn({ kind: "none" })}
-            />
             {NON_GOLD_COLORS.map((c) => {
               const n = colorCounts[c];
-              if (n < 2) return null;
+              if (n < 1) return null;
               return (
-                <div key={c} className="flex flex-wrap items-center gap-2">
+                <div key={c} className="space-y-1">
                   <RadioRow
                     label={
                       <span className="flex items-center gap-2">
                         <ClipDot color={c} />
-                        Cash in 2 ({n} avail) → T1+T2
+                        Cash in 1 ({n} avail) → T1 only
                       </span>
                     }
                     checked={
-                      cashIn.kind === "color" &&
+                      cashIn?.kind === "color" &&
                       cashIn.color === c &&
-                      cashIn.count === 2
+                      cashIn.count === 1
                     }
                     onSelect={() =>
-                      setCashIn({ kind: "color", color: c, count: 2 })
+                      setCashIn({ kind: "color", color: c, count: 1 })
                     }
                   />
+                  {n >= 2 && (
+                    <RadioRow
+                      label={
+                        <span className="flex items-center gap-2">
+                          <ClipDot color={c} />
+                          Cash in 2 → T1+T2
+                        </span>
+                      }
+                      checked={
+                        cashIn?.kind === "color" &&
+                        cashIn.color === c &&
+                        cashIn.count === 2
+                      }
+                      onSelect={() =>
+                        setCashIn({ kind: "color", color: c, count: 2 })
+                      }
+                    />
+                  )}
                   {n >= 3 && (
                     <RadioRow
                       label={
@@ -219,7 +256,7 @@ export function SpinView({ area }: { area: Area }) {
                         </span>
                       }
                       checked={
-                        cashIn.kind === "color" &&
+                        cashIn?.kind === "color" &&
                         cashIn.color === c &&
                         cashIn.count === 3
                       }
@@ -239,7 +276,7 @@ export function SpinView({ area }: { area: Area }) {
                     Use gold clip → T1+T2+T3 (no color match needed)
                   </span>
                 }
-                checked={cashIn.kind === "gold"}
+                checked={cashIn?.kind === "gold"}
                 onSelect={() => setCashIn({ kind: "gold" })}
               />
             )}
@@ -264,6 +301,11 @@ export function SpinView({ area }: { area: Area }) {
         {hasPendingBonus && (
           <p className="text-xs text-slate-500 mt-2">
             Resolve the pending bonus wheel before spinning again.
+          </p>
+        )}
+        {bankEmpty && !hasActiveDiscount && !hasPendingBonus && (
+          <p className="text-xs text-slate-500 mt-2">
+            Earn at least one clip from a habit to spin.
           </p>
         )}
       </div>

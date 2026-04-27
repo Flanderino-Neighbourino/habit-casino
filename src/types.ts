@@ -31,6 +31,8 @@ export type Habit = {
   name: string;
   effortNumber: number;
   effortUnit: string;
+  clipYield: number;
+  dailyTarget: number;
 };
 
 export type Reward = {
@@ -69,7 +71,7 @@ export type Area = {
   jar: Clip[];
   dailyState: {
     date: string;
-    completedHabitIds: string[];
+    completionCounts: Record<string, number>;
   };
 };
 
@@ -77,7 +79,7 @@ export type SpinPayload = {
   rolledSegment: "t1" | "t2" | "t3" | "bonus" | "jackpot";
   activeTiers: ("t1" | "t2" | "t3")[];
   paidReward: { tier: RewardTier; name: string; amount: number; unit: string };
-  cashedIn: { color: ClipColor; count: 2 | 3 } | { gold: true } | null;
+  cashedIn: { color: ClipColor; count: 1 | 2 | 3 } | { gold: true } | null;
   nearMiss: boolean;
 };
 
@@ -118,6 +120,11 @@ export type AppState = {
   schemaVersion: number;
 };
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
+export const HABIT_YIELD_MIN = 1;
+export const HABIT_YIELD_MAX = 20;
+export const HABIT_DAILY_MIN = 1;
+export const HABIT_DAILY_MAX = 99;
+export const MAX_FLY_ANIMS = 10;
 export const MAX_HISTORY = 50;
 export const MAX_BONUS_CHAIN = 5;
