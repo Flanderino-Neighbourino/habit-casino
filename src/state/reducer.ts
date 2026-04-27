@@ -278,8 +278,8 @@ export function reducer(state: AppState, action: Action): AppState {
         });
       }
 
-      let paidTier: RewardTier;
-      let nearMiss = false;
+      let paidTier: RewardTier | null;
+      let loss = false;
       switch (action.rolledSegment) {
         case "t1":
           paidTier = "t1";
@@ -288,16 +288,16 @@ export function reducer(state: AppState, action: Action): AppState {
           if (activeTiers.includes("t2")) {
             paidTier = "t2";
           } else {
-            paidTier = "t1";
-            nearMiss = true;
+            paidTier = null;
+            loss = true;
           }
           break;
         case "t3":
           if (activeTiers.includes("t3")) {
             paidTier = "t3";
           } else {
-            paidTier = "t1";
-            nearMiss = true;
+            paidTier = null;
+            loss = true;
           }
           break;
         case "jackpot":
@@ -311,15 +311,16 @@ export function reducer(state: AppState, action: Action): AppState {
       }
 
       const updatedArea = next.areas.find((a) => a.id === area.id)!;
-      const r = rewardOf(updatedArea, paidTier);
-      const paidReward = { tier: paidTier, ...rewardSummary(r) };
+      const paidReward = paidTier
+        ? { tier: paidTier, ...rewardSummary(rewardOf(updatedArea, paidTier)) }
+        : null;
 
       const spinPayload: SpinPayload = {
         rolledSegment: action.rolledSegment,
         activeTiers,
         paidReward,
         cashedIn: action.cashIn,
-        nearMiss,
+        loss,
       };
 
       next = pushHistory(next, {

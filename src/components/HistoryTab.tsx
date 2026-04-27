@@ -143,16 +143,27 @@ function entrySummary(
     case "spin": {
       const p = e.payload as {
         rolledSegment: string;
-        paidReward: { name: string; amount: number; unit: string; tier: string };
-        nearMiss: boolean;
+        paidReward:
+          | { name: string; amount: number; unit: string; tier: string }
+          | null;
+        loss?: boolean;
+        nearMiss?: boolean;
       };
+      if (p.loss) {
+        return `💸 Loss — landed ${p.rolledSegment.toUpperCase()}, no reward (clips cashed into jar)`;
+      }
+      // Legacy entries from before the loss change had a paid T1 + nearMiss flag.
+      if (p.nearMiss && p.paidReward) {
+        const t = p.paidReward.tier.toUpperCase();
+        const r = `${p.paidReward.name}, ${p.paidReward.amount} ${p.paidReward.unit}`;
+        return `😬 Near miss — landed ${p.rolledSegment.toUpperCase()} but paid ${t}: ${r}`;
+      }
+      if (!p.paidReward) {
+        return `🎰 Spun ${p.rolledSegment.toUpperCase()}`;
+      }
       const tier = p.paidReward.tier.toUpperCase();
       const reward = `${p.paidReward.name}, ${p.paidReward.amount} ${p.paidReward.unit}`;
-      if (p.nearMiss) {
-        return `😬 Near miss — landed ${p.rolledSegment.toUpperCase()} but paid ${tier}: ${reward}`;
-      }
-      if (p.rolledSegment === "jackpot")
-        return `🎉 JACKPOT — ${reward}`;
+      if (p.rolledSegment === "jackpot") return `🎉 JACKPOT — ${reward}`;
       if (p.rolledSegment === "bonus")
         return `🎰 Bonus landed — paid ${tier}: ${reward}`;
       return `🎰 Spun ${tier} — ${reward}`;

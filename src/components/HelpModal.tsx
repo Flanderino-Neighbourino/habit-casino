@@ -77,14 +77,23 @@ export function HelpModal({ open, onClose }: { open: boolean; onClose: () => voi
             <li>T2 → <strong>30%</strong></li>
             <li>T3 → <strong>20%</strong></li>
             <li>Bonus → <strong>8%</strong></li>
-            <li>Jackpot → <strong>2%</strong></li>
+            <li>Jackpot → <strong>2%</strong> (always paid)</li>
           </ul>
           <p className="mt-2">
-            If a tier wasn't activated (e.g. you only cashed in 1 clip but the
-            wheel landed T3) you get a <strong>near miss</strong> — you're paid
-            the highest tier you <em>did</em> activate. The wheel still shows it
-            landing on T3, then the modal calls out the downgrade.
+            If the wheel lands on a tier you didn't activate (e.g. you cashed in
+            1 clip and it landed T2 or T3) it's a <strong>loss</strong> — no
+            reward, but your cashed clips still go into the jar toward your
+            milestones. Cash in more next time to activate higher tiers and
+            close those gaps.
           </p>
+          <p className="mt-2">
+            Win-rate by cash-in:
+          </p>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>1 clip (T1 only): 50% win, 50% loss</li>
+            <li>2 same-color (T1+T2): 80% win, 20% loss</li>
+            <li>3 same-color or gold (all tiers): 100% win, no loss</li>
+          </ul>
         </Section>
 
         <Section heading="Bonus round">

@@ -140,8 +140,8 @@ export function SpinView({ area }: { area: Area }) {
     if (cashIn.kind === "color" && cashIn.count >= 3) activeNow.push("t3");
     if (cashIn.kind === "gold") activeNow.push("t2", "t3");
 
-    let paidTier: "t1" | "t2" | "t3" | "jackpot";
-    let nearMiss = false;
+    let paidTier: "t1" | "t2" | "t3" | "jackpot" | null;
+    let loss = false;
     switch (rolledSegment) {
       case "t1":
         paidTier = "t1";
@@ -149,15 +149,15 @@ export function SpinView({ area }: { area: Area }) {
       case "t2":
         if (activeNow.includes("t2")) paidTier = "t2";
         else {
-          paidTier = "t1";
-          nearMiss = true;
+          paidTier = null;
+          loss = true;
         }
         break;
       case "t3":
         if (activeNow.includes("t3")) paidTier = "t3";
         else {
-          paidTier = "t1";
-          nearMiss = true;
+          paidTier = null;
+          loss = true;
         }
         break;
       case "jackpot":
@@ -169,14 +169,25 @@ export function SpinView({ area }: { area: Area }) {
         else paidTier = "t1";
         break;
     }
-    const r = area.rewards[paidTier];
-    const unit = typeof r.amountUnit === "string" ? r.amountUnit : r.amountUnit.custom;
+    const paidReward = paidTier
+      ? (() => {
+          const r = area.rewards[paidTier];
+          const unit =
+            typeof r.amountUnit === "string" ? r.amountUnit : r.amountUnit.custom;
+          return {
+            tier: paidTier,
+            name: r.name,
+            amount: r.amountNumber,
+            unit,
+          };
+        })()
+      : null;
     const payload: SpinPayload = {
       rolledSegment,
       activeTiers: activeNow,
-      paidReward: { tier: paidTier, name: r.name, amount: r.amountNumber, unit },
+      paidReward,
       cashedIn: dispatchCashIn,
-      nearMiss,
+      loss,
     };
     setReward(payload);
     setCashIn(null);

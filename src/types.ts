@@ -78,9 +78,11 @@ export type Area = {
 export type SpinPayload = {
   rolledSegment: "t1" | "t2" | "t3" | "bonus" | "jackpot";
   activeTiers: ("t1" | "t2" | "t3")[];
-  paidReward: { tier: RewardTier; name: string; amount: number; unit: string };
+  paidReward:
+    | { tier: RewardTier; name: string; amount: number; unit: string }
+    | null;
   cashedIn: { color: ClipColor; count: 1 | 2 | 3 } | { gold: true } | null;
-  nearMiss: boolean;
+  loss: boolean;
 };
 
 export type HistoryEntryType =
