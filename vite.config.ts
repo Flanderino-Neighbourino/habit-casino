@@ -2,7 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // For dev (`npm run dev`) the app is served at the root: http://localhost:3003/
+  // For prod (`npm run build`) it's served from a GitHub Pages sub-path:
+  // https://<user>.github.io/habit-casino/
+  base: command === "build" ? "/habit-casino/" : "/",
   plugins: [
     react(),
     VitePWA({
@@ -15,7 +19,8 @@ export default defineConfig({
         theme_color: "#0f172a",
         background_color: "#0f172a",
         display: "standalone",
-        start_url: "/",
+        start_url: "./",
+        scope: "./",
         icons: [
           {
             src: "icons/icon-192.png",
@@ -50,4 +55,4 @@ export default defineConfig({
     host: "0.0.0.0",
     strictPort: true,
   },
-});
+}));
