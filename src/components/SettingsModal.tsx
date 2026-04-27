@@ -4,6 +4,7 @@ import { Modal } from "./Modal";
 import { useApp } from "../state/AppContext";
 import { AreaEditor } from "./AreaEditor";
 import { areaAccentClasses } from "../lib/util";
+import { SyncSection } from "./SyncSection";
 
 export function SettingsModal({ onClose }: { onClose: () => void }) {
   const { state, resetAll } = useApp();
@@ -41,6 +42,8 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
             </div>
           );
         })}
+
+        <SyncSection />
 
         <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
           {!confirmReset ? (
