@@ -91,17 +91,30 @@ export function Onboarding() {
           <div className="space-y-4">
             <h1 className="text-3xl font-bold">Welcome to Habit Casino.</h1>
             <p className="text-lg leading-relaxed text-slate-700 dark:text-slate-300">
-              You're going to set up three life areas. In each area, you'll
-              define habits that earn you paper clips, four real-world
+              You're going to set up between 1 and 5 life areas. In each area
+              you'll define habits that earn you paper clips, four real-world
               rewards (T1 → Jackpot) you can spin for, and three jar
               milestones. Once you're done, completing a habit earns a clip,
               cashing in clips activates better tiers on the wheel, and the
               wheel decides what you've actually earned. The rules are
               ruthless on purpose — that's why it works.
             </p>
-            <button className="btn-primary text-lg w-full sm:w-auto" onClick={goNext}>
-              Let's set it up
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button className="btn-primary text-lg" onClick={goNext}>
+                Let's set it up
+              </button>
+              <button
+                className="btn-secondary text-lg"
+                onClick={() => setHelpOpen(true)}
+              >
+                <HelpCircle className="w-5 h-5" /> How it works
+              </button>
+            </div>
+            <p className="text-sm text-slate-500">
+              The full guide explains the wheel odds, bonus round, the naked
+              rule, sync, and tips for picking good rewards. You can open it
+              again any time from the <HelpCircle className="inline w-4 h-4 align-text-bottom" /> button in the header.
+            </p>
 
             {isSyncConfigured() && <PullFromCloudPanel />}
           </div>
