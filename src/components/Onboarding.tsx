@@ -1,7 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Cloud } from "lucide-react";
 import { useApp } from "../state/AppContext";
 import { AreaEditor } from "./AreaEditor";
+import {
+  isSyncConfigured,
+  pullFromCloud,
+  savePassphrase,
+} from "../lib/sync";
 
 type Step =
   | { kind: "welcome" }
@@ -89,6 +94,8 @@ export function Onboarding() {
             <button className="btn-primary text-lg w-full sm:w-auto" onClick={goNext}>
               Let's set it up
             </button>
+
+            {isSyncConfigured() && <PullFromCloudPanel />}
           </div>
         )}
 
@@ -151,6 +158,90 @@ export function Onboarding() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function PullFromCloudPanel() {
+  const { dispatch } = useApp();
+  const [open, setOpen] = useState(false);
+  const [passphrase, setPassphrase] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onPull = async () => {
+    if (!passphrase.trim()) {
+      setError("Enter the passphrase you used on your other device.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await pullFromCloud(passphrase);
+      if (!result) {
+        setError(
+          "No cloud save found for this passphrase. Push from your other device first, or set up fresh here."
+        );
+        return;
+      }
+      savePassphrase(passphrase);
+      dispatch({ type: "loadState", state: result.state });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card p-4 mt-6 space-y-3">
+      <div className="flex items-center gap-2">
+        <Cloud className="w-4 h-4 text-slate-500" />
+        <span className="text-sm font-medium">Already use this on another device?</span>
+      </div>
+      {!open ? (
+        <button className="btn-secondary" onClick={() => setOpen(true)}>
+          Pull from cloud
+        </button>
+      ) : (
+        <>
+          <p className="text-sm text-slate-500">
+            Enter the same passphrase you used on your other device. Your
+            data will load and you'll skip setup.
+          </p>
+          <input
+            type="password"
+            className="input"
+            placeholder="Passphrase"
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !busy && onPull()}
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                setOpen(false);
+                setError(null);
+              }}
+              disabled={busy}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn-primary flex-1"
+              onClick={onPull}
+              disabled={busy}
+            >
+              {busy ? "Pulling…" : "Pull and continue"}
+            </button>
+          </div>
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+        </>
+      )}
     </div>
   );
 }
